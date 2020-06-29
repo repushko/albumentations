@@ -97,7 +97,7 @@ def convert_gaze_vector_from_albumentations(
     return gaze_vector
 
 
-def gaze_vector_rotation_matrix(x_angle, y_angle):
+def gaze_vector_rotation_matrix(x_angle, y_angle, z_angle):
     x_angle_rad = math.radians(x_angle)
     cos_x = math.cos(x_angle_rad)
     sin_x = math.sin(x_angle_rad)
@@ -106,7 +106,12 @@ def gaze_vector_rotation_matrix(x_angle, y_angle):
     cos_y = math.cos(y_angle_rad)
     sin_y = math.sin(y_angle_rad)
 
+    z_angle_rad = math.radians(z_angle)
+    cos_z = math.cos(z_angle_rad)
+    sin_z = math.sin(z_angle_rad)
+
     x_rotation_matrix = np.array([[1, 0, 0], [0, cos_x, -1*sin_x], [0, sin_x, cos_x]])
     y_rotation_matrix = np.array([[cos_y, 0, sin_y], [0, 1, 0], [-sin_y, 0, cos_y]])
+    z_rotation_matrix = np.array([[cos_z, -1*sin_z, 0], [sin_z, cos_z, 0], [0, 0, 1]])
 
-    return x_rotation_matrix.dot(y_rotation_matrix)
+    return x_rotation_matrix.dot(y_rotation_matrix.dot(z_rotation_matrix))

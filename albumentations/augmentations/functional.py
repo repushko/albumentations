@@ -2049,11 +2049,11 @@ def gaze_vector_as_is(gaze_vector, **params):
 
 
 def gaze_vector_hflip(gaze_vector, **params):
-    return gaze_vector_rotate(gaze_vector, 180, 0)
+    return gaze_vector_rotate(gaze_vector, x_angle=180)
 
 
 def gaze_vector_vflip(gaze_vector, **params):
-    return gaze_vector_rotate(gaze_vector, 0, 180)
+    return gaze_vector_rotate(gaze_vector, y_angle=180)
 
 
 def gaze_vector_flip(gaze_vector, d, **params):
@@ -2069,9 +2069,8 @@ def gaze_vector_flip(gaze_vector, d, **params):
     return gaze_vector
 
 
-def gaze_vector_rotate(gaze_vector, x_angle, y_angle):
-    print("gaze_vector_rotate", gaze_vector)
-    rotation_matrix = gaze_vector_rotation_matrix(x_angle, -1*y_angle)
+def gaze_vector_rotate(gaze_vector, x_angle=0, y_angle=0, z_angle=0):
+    rotation_matrix = gaze_vector_rotation_matrix(x_angle, y_angle, z_angle)
     np_gaze_vector = np.array(gaze_vector[:3])
     x, y, z = rotation_matrix.dot(np_gaze_vector)[:3]
     return x, y, abs(z)

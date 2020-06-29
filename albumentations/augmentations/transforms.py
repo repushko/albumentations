@@ -553,7 +553,7 @@ class Rotate(DualTransform):
         return F.keypoint_rotate(keypoint, angle, **params)
 
     def apply_to_gaze_vector(self, gaze_vector, angle=0, **params):
-        return F.gaze_vector_rotate(gaze_vector, 0, angle)
+        return F.gaze_vector_rotate(gaze_vector, z_angle=angle)
 
     def get_transform_init_args_names(self):
         return ("limit", "interpolation", "border_mode", "value", "mask_value")
@@ -671,7 +671,7 @@ class ShiftScaleRotate(DualTransform):
         return F.bbox_shift_scale_rotate(bbox, angle, scale, dx, dy, **params)
 
     def apply_to_gaze_vector(self, gaze_vector, angle=0, **params):
-        return F.gaze_vector_rotate(gaze_vector, 0, angle)
+        return F.gaze_vector_rotate(gaze_vector, z_angle=angle)
 
     def get_transform_init_args(self):
         return {
