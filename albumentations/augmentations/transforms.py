@@ -164,6 +164,9 @@ class PadIfNeeded(DualTransform):
         x, y, angle, scale = keypoint
         return x + pad_left, y + pad_top, angle, scale
 
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return F.gaze_vector_as_is(gaze_vector, **params)
+
     def get_transform_init_args_names(self):
         return ("min_height", "min_width", "border_mode", "value", "mask_value")
 
@@ -207,6 +210,9 @@ class Crop(DualTransform):
             cols=params["cols"],
         )
 
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return F.gaze_vector_as_is(gaze_vector, **params)
+
     def get_transform_init_args_names(self):
         return ("x_min", "y_min", "x_max", "y_max")
 
@@ -232,6 +238,9 @@ class VerticalFlip(DualTransform):
 
     def apply_to_keypoint(self, keypoint, **params):
         return F.keypoint_vflip(keypoint, **params)
+
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return F.gaze_vector_vflip(gaze_vector)
 
     def get_transform_init_args_names(self):
         return ()
@@ -263,6 +272,9 @@ class HorizontalFlip(DualTransform):
 
     def apply_to_keypoint(self, keypoint, **params):
         return F.keypoint_hflip(keypoint, **params)
+
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return F.gaze_vector_hflip(gaze_vector)
 
     def get_transform_init_args_names(self):
         return ()
@@ -298,6 +310,9 @@ class Flip(DualTransform):
 
     def apply_to_keypoint(self, keypoint, **params):
         return F.keypoint_flip(keypoint, **params)
+
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return F.gaze_vector_flip(gaze_vector, **params)
 
     def get_transform_init_args_names(self):
         return ()
@@ -537,6 +552,9 @@ class Rotate(DualTransform):
     def apply_to_keypoint(self, keypoint, angle=0, **params):
         return F.keypoint_rotate(keypoint, angle, **params)
 
+    def apply_to_gaze_vector(self, gaze_vector, angle=0, **params):
+        return F.gaze_vector_rotate(gaze_vector, 0, angle)
+
     def get_transform_init_args_names(self):
         return ("limit", "interpolation", "border_mode", "value", "mask_value")
 
@@ -652,6 +670,9 @@ class ShiftScaleRotate(DualTransform):
     def apply_to_bbox(self, bbox, angle, scale, dx, dy, **params):
         return F.bbox_shift_scale_rotate(bbox, angle, scale, dx, dy, **params)
 
+    def apply_to_gaze_vector(self, gaze_vector, angle=0, **params):
+        return F.gaze_vector_rotate(gaze_vector, 0, angle)
+
     def get_transform_init_args(self):
         return {
             "shift_limit": self.shift_limit,
@@ -698,6 +719,9 @@ class CenterCrop(DualTransform):
     def apply_to_keypoint(self, keypoint, **params):
         return F.keypoint_center_crop(keypoint, self.height, self.width, **params)
 
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return F.gaze_vector_as_is(gaze_vector, **params)
+
     def get_transform_init_args_names(self):
         return ("height", "width")
 
@@ -733,6 +757,9 @@ class RandomCrop(DualTransform):
 
     def apply_to_keypoint(self, keypoint, **params):
         return F.keypoint_random_crop(keypoint, self.height, self.width, **params)
+
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return F.gaze_vector_as_is(gaze_vector, **params)
 
     def get_transform_init_args_names(self):
         return ("height", "width")
@@ -817,6 +844,9 @@ class _BaseRandomSizedCrop(DualTransform):
         scale_y = self.height / crop_height
         keypoint = F.keypoint_scale(keypoint, scale_x, scale_y)
         return keypoint
+
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return F.gaze_vector_as_is(gaze_vector, **params)
 
 
 class RandomSizedCrop(_BaseRandomSizedCrop):
@@ -2952,12 +2982,12 @@ class Lambda(NoOp):
         Any
     """
 
-    def __init__(self, image=None, mask=None, keypoint=None, bbox=None, name=None, always_apply=False, p=1.0):
+    def __init__(self, image=None, mask=None, keypoint=None, bbox=None, gaze_vector=None, name=None, always_apply=False, p=1.0):
         super(Lambda, self).__init__(always_apply, p)
 
         self.name = name
-        self.custom_apply_fns = {target_name: F.noop for target_name in ("image", "mask", "keypoint", "bbox")}
-        for target_name, custom_apply_fn in {"image": image, "mask": mask, "keypoint": keypoint, "bbox": bbox}.items():
+        self.custom_apply_fns = {target_name: F.noop for target_name in ("image", "mask", "keypoint", "bbox", "gaze_vector")}
+        for target_name, custom_apply_fn in {"image": image, "mask": mask, "keypoint": keypoint, "bbox": bbox, "gaze_vector": gaze_vector}.items():
             if custom_apply_fn is not None:
                 if isinstance(custom_apply_fn, LambdaType) and custom_apply_fn.__name__ == "<lambda>":
                     warnings.warn(
@@ -2982,6 +3012,10 @@ class Lambda(NoOp):
     def apply_to_keypoint(self, keypoint, **params):
         fn = self.custom_apply_fns["keypoint"]
         return fn(keypoint, **params)
+
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        fn = self.custom_apply_fns["gaze_vector"]
+        return fn(gaze_vector, **params)
 
     def _to_dict(self):
         if self.name is None:

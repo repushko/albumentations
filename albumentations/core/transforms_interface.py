@@ -205,6 +205,7 @@ class DualTransform(BasicTransform):
             "masks": self.apply_to_masks,
             "bboxes": self.apply_to_bboxes,
             "keypoints": self.apply_to_keypoints,
+            "gaze_vector": self.apply_to_gaze_vector,
         }
 
     def apply_to_bbox(self, bbox, **params):
@@ -212,6 +213,9 @@ class DualTransform(BasicTransform):
 
     def apply_to_keypoint(self, keypoint, **params):
         raise NotImplementedError("Method apply_to_keypoint is not implemented in class " + self.__class__.__name__)
+
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        raise NotImplementedError("Method apply_to_gaze_vector is not implemented in class " + self.__class__.__name__)
 
     def apply_to_bboxes(self, bboxes, **params):
         return [self.apply_to_bbox(tuple(bbox[:4]), **params) + tuple(bbox[4:]) for bbox in bboxes]
@@ -248,6 +252,9 @@ class NoOp(DualTransform):
 
     def apply_to_mask(self, img, **params):
         return img
+
+    def apply_to_gaze_vector(self, gaze_vector, **params):
+        return gaze_vector
 
     def get_transform_init_args_names(self):
         return ()

@@ -6,6 +6,7 @@ import random
 import numpy as np
 
 from albumentations.augmentations.keypoints_utils import KeypointsProcessor
+from albumentations.augmentations.gaze_vector_utils import GazeVectorProcessor
 from albumentations.core.serialization import SerializableMeta
 from albumentations.core.six import add_metaclass
 from albumentations.core.transforms_interface import DualTransform
@@ -13,7 +14,7 @@ from albumentations.core.utils import format_args, Params
 from albumentations.augmentations.bbox_utils import BboxProcessor
 from albumentations.core.serialization import SERIALIZABLE_REGISTRY, instantiate_lambda
 
-__all__ = ["Compose", "OneOf", "OneOrOther", "BboxParams", "KeypointParams", "ReplayCompose"]
+__all__ = ["Compose", "OneOf", "OneOrOther", "BboxParams", "KeypointParams", "GazeVectorParams", "ReplayCompose"]
 
 
 REPR_INDENT_STEP = 2
@@ -128,7 +129,7 @@ class Compose(BaseCompose):
         p (float): probability of applying all list of transforms. Default: 1.0.
     """
 
-    def __init__(self, transforms, bbox_params=None, keypoint_params=None, additional_targets=None, p=1.0):
+    def __init__(self, transforms, bbox_params=None, keypoint_params=None, gaze_vector_params=None, additional_targets=None, p=1.0):
         super(Compose, self).__init__([t for t in transforms if t is not None], p)
 
         self.processors = {}
@@ -149,6 +150,15 @@ class Compose(BaseCompose):
             else:
                 raise ValueError("unknown format of keypoint_params, please use `dict` or `KeypointParams`")
             self.processors["keypoints"] = KeypointsProcessor(params, additional_targets)
+
+        if gaze_vector_params:
+            if isinstance(gaze_vector_params, dict):
+                params = GazeVectorParams(**gaze_vector_params)
+            elif isinstance(gaze_vector_params, GazeVectorParams):
+                params = gaze_vector_params
+            else:
+                raise ValueError("unknown format of gaze_vector_params, please use `dict` or `GazeVectorParams`")
+            self.processors["gaze_vector"] = GazeVectorProcessor(params, additional_targets)
 
         if additional_targets is None:
             additional_targets = {}
@@ -185,12 +195,14 @@ class Compose(BaseCompose):
         dictionary = super(Compose, self)._to_dict()
         bbox_processor = self.processors.get("bboxes")
         keypoints_processor = self.processors.get("keypoints")
+        gaze_vector_processor = self.processors.get("gaze_vector")
         dictionary.update(
             {
                 "bbox_params": bbox_processor.params._to_dict() if bbox_processor else None,  # skipcq: PYL-W0212
                 "keypoint_params": keypoints_processor.params._to_dict()  # skipcq: PYL-W0212
                 if keypoints_processor
                 else None,
+                "gaze_vector_params": gaze_vector_processor.params._to_dict() if gaze_vector_processor else None,
                 "additional_targets": self.additional_targets,
             }
         )
@@ -417,4 +429,13 @@ class KeypointParams(Params):
     def _to_dict(self):
         data = super(KeypointParams, self)._to_dict()
         data.update({"remove_invisible": self.remove_invisible, "angle_in_degrees": self.angle_in_degrees})
+        return data
+
+
+class GazeVectorParams(Params):
+    def __init__(self, format):
+        super(GazeVectorParams, self).__init__(format)
+
+    def _to_dict(self):
+        data = super(GazeVectorParams, self)._to_dict()
         return data

@@ -7,4 +7,5 @@ from .core.transforms_interface import *
 from .core.serialization import *
 from .augmentations.transforms import *
 from .augmentations.bbox_utils import *
+from .augmentations.gaze_vector_utils import *
 from .imgaug.transforms import *

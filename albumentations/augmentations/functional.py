@@ -9,6 +9,7 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 
 from albumentations.augmentations.bbox_utils import denormalize_bbox, normalize_bbox
+from albumentations.augmentations.gaze_vector_utils import gaze_vector_rotation_matrix
 from albumentations.augmentations.keypoints_utils import angle_to_2pi_range
 
 MAX_VALUES_BY_DTYPE = {
@@ -2041,3 +2042,36 @@ def glass_blur(img, sigma, max_delta, iterations, dxy, mode):
             x[h, w], x[h + dy, w + dx] = x[h + dy, w + dx], x[h, w]
 
     return np.clip(cv2.GaussianBlur(x / coef, sigmaX=sigma, ksize=(0, 0)), 0, 1) * coef
+
+
+def gaze_vector_as_is(gaze_vector, **params):
+    return gaze_vector[:3]
+
+
+def gaze_vector_hflip(gaze_vector, **params):
+    return gaze_vector_rotate(gaze_vector, 180, 0)
+
+
+def gaze_vector_vflip(gaze_vector, **params):
+    return gaze_vector_rotate(gaze_vector, 0, 180)
+
+
+def gaze_vector_flip(gaze_vector, d, **params):
+    if d == 0:
+        gaze_vector = gaze_vector_vflip(gaze_vector, **params)
+    elif d == 1:
+        gaze_vector = gaze_vector_hflip(gaze_vector, **params)
+    elif d == -1:
+        gaze_vector = gaze_vector_hflip(gaze_vector, **params)
+        gaze_vector = gaze_vector_vflip(gaze_vector, **params)
+    else:
+        raise ValueError("Invalid d value {}. Valid values are -1, 0 and 1".format(d))
+    return gaze_vector
+
+
+def gaze_vector_rotate(gaze_vector, x_angle, y_angle):
+    print("gaze_vector_rotate", gaze_vector)
+    rotation_matrix = gaze_vector_rotation_matrix(x_angle, -1*y_angle)
+    np_gaze_vector = np.array(gaze_vector[:3])
+    x, y, z = rotation_matrix.dot(np_gaze_vector)[:3]
+    return x, y, abs(z)
